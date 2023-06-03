@@ -6,7 +6,7 @@ module.exports = {
     init: ({}) => {
         robot = require('robotjs');
     },
-    robot: ({ value }) => {
+    Robot: ({ value }) => {
         robot.keyTap(value);
     }
 }

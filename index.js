@@ -71,7 +71,6 @@ let main = () => {
 
     oscServer.on('message', msg => {
         oscValues[msg[0]] = msg[1];
-
         let events = config['Events'].filter(x => x.Hook === 'OSCEventFired');
         
         for(let i = 0; i < events.length; i++){
@@ -117,7 +116,7 @@ let main = () => {
                     let execValue = toExecute.join(': ').trim();
 
                     processKey(execCommand, execValue, msg, actionDataCache);
-                } else{
+                } else if(actionDataCache['elseEnabled']){
                     if(actionDataCache['else']){
                         toExecute = actionDataCache['else'].split(': ');
                         let execCommand = toExecute.trim();
@@ -145,7 +144,7 @@ let main = () => {
                     let execValue = toExecute.join(': ').trim();
 
                     processKey(execCommand, execValue, msg, actionDataCache);
-                } else{
+                } else if(actionDataCache['elseEnabled']){
                     if(actionDataCache['else']){
                         toExecute = actionDataCache['else'].split(': ');
                         let execCommand = actionDataCache['else'].trim();
@@ -173,7 +172,7 @@ let main = () => {
                     let execValue = toExecute.join(': ').trim();
 
                     processKey(execCommand, execValue, msg, actionDataCache);
-                } else{
+                } else if(actionDataCache['elseEnabled']){
                     if(actionDataCache['else']){
                         toExecute = actionDataCache['else'].split(': ');
                         let execCommand = actionDataCache['else'].trim();
@@ -201,7 +200,7 @@ let main = () => {
                     let execValue = toExecute.join(': ').trim();
 
                     processKey(execCommand, execValue, msg, actionDataCache);
-                } else{
+                } else if(actionDataCache['elseEnabled']){
                     if(actionDataCache['else']){
                         toExecute = actionDataCache['else'].split(': ');
                         let execCommand = actionDataCache['else'].trim();
@@ -228,7 +227,7 @@ let main = () => {
                     let execValue = toExecute.join(': ').trim();
 
                     processKey(execCommand, execValue, msg, actionDataCache);
-                } else{
+                } else if(actionDataCache['elseEnabled']){
                     if(actionDataCache['else']){
                         toExecute = actionDataCache['else'].split(': ');
                         let execCommand = actionDataCache['else'].trim();
@@ -256,7 +255,9 @@ let main = () => {
             }
 
             actionDataCache['else'] = value;
-        } else if(libraryKeys[key]){
+        } else if(key === '_EnableElse')
+            actionDataCache['elseEnabled'] = value === '1' ? true : false;
+        else if(libraryKeys[key]){
             libraryKeys[key]({ key, value, msg, actionDataCache, oscClient });
         } else if(key === 'chatbox'){
             let val = value === 'VALUE' ? msg[1] : value;

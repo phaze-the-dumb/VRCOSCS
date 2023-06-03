@@ -126,6 +126,33 @@ This checks if the players velocity in the X direction is greater than `1.5` if 
 The following boolean operators can be used: 
 `=`, `>`, `<`, `>=`, `<=`
 
+**ELSE**
+
+VRCOSCS Supports else statements, but they are a little bit more complicated. Due to VRCOSCS not running the lines of code in the order they are written, there can only be one if statement per action or event if else is used.
+
+To enable the use of else statements put `- _EnableElse: 1` at the top of the action (or anywhere else! VRCOSCS does not care about the order you write stuff it)
+
+You can then use the `- else: ` keyword.
+
+```yml
+- Events:
+    - Change clothes depending on velocity:
+        - _EnableElse: 1
+        - Hook: OSCEventFired
+        - velX > -1.5: velX < 1.5: velY > -1.5: velY < 1.5: velZ > -1.5: velZ < 1.5: DO SOMETHING
+        - else: DO SOMETHING ELSE
+```
+
+This code "does something" when the player is moving at a velocity higher than 1.5 and then "does something else" when the play isn't.
+
+Don't worry about the "event" bits i'll explain those in a minute.
+
+### Events!
+
+There is the event key that allows code to be executed even when none of the osc actions are fired. There are currently three events:
+- `OSCEventFired` - When an osc event is fired
+- `ChatboxUpdate` - Runs every 10 seconds, to be used when 
+
 ### Extra APIs
 
 You can interface with vrchats osc api through this by using the `OSCOut` keyword as I have shown above, but there are other keywords too.
