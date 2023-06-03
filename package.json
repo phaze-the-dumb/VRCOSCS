@@ -1,0 +1,19 @@
+{
+  "dependencies": {
+    "honk": "github:phaze-the-dumb/honk.js",
+    "node-osc": "^8.0.11",
+    "robotjs": "^0.6.0",
+    "voicemeeter-connector": "^1.2.0",
+    "ws": "^8.13.0",
+    "xsnotifier": "^0.5.3"
+  },
+  "name": "vrchat-osc-scripter",
+  "description": "VRCOSC Scripting is a simple scripting \"language\" to make is easy and simple to control osc inputs and outputs. These can also link into other applications such as [VoiceMeeter](https://vb-audio.com/Voicemeeter/index.htm).",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "PhazeDev",
+  "license": "ISC"
+}

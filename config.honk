@@ -1,0 +1,67 @@
+OSC Config
+- Client Port: 9000
+- Client IP: "127.0.0.1"
+- Server Port: 9001
+
+- Default Values:
+    - chatboxType: 0
+    - velX: 0
+    - velY: 0
+    - velZ: 0
+
+- OSC Actions:
+    - Chatbox:
+        - OSC: /avatar/parameters/Chatbox
+        - chatboxType: VALUE
+        - VALUE = 0: chatbox: 
+        - VALUE = 1: chatbox: ♫ %song%
+
+    - VMVol:
+        - OSC: /avatar/parameters/VMVol
+        - VoiceMeeterValue: VALUE
+        - VoiceMeeterStrip: 7
+        - VoiceMeeterProperty: Gain
+
+    - Muted:
+        - OSC: /avatar/parameters/Muted
+        - VoiceMeeterValue: VALUE
+        - VoiceMeeterStrip: 6
+        - VoiceMeeterProperty: Mute
+
+    - MusicPassthrough:
+        - OSC: /avatar/parameters/MusicPassthrough
+        - VoiceMeeterValue: VALUE
+        - VoiceMeeterStrip: 7
+        - VoiceMeeterProperty: B1
+
+    - MusicAction:
+        - OSC: /avatar/parameters/MusicAction
+        - VALUE = 1: Robot: audio_prev
+        - VALUE = 2: Robot: audio_play
+        - VALUE = 3: Robot: audio_next
+
+    - VelocityX:
+        - OSC: /avatar/parameters/VelocityX
+        - velX: VALUE
+    
+    - VelocityY:
+        - OSC: /avatar/parameters/VelocityY
+        - velY: VALUE
+
+    - VelocityZ:
+        - OSC: /avatar/parameters/VelocityZ
+        - velZ: VALUE
+
+- Events:
+    - Change clothes depending on velocity:
+        - Hook: OSCEventFired
+        - velX > -1.5: velX < 1.5: velY > -1.5: velY < 1.5: velZ > -1.5: velZ < 1.5: OSCOut: /avatar/parameters/RINDO_costume 1
+        - else: OSCOut: /avatar/parameters/RINDO_costume 9
+        
+    - Keep chatbox updated:
+        - Hook: ChatboxUpdate
+        - chatboxType = 1: chatbox: ♫ %song%
+      
+    - Update chatbox when song changes:
+        - Hook: SongChange
+        - chatboxType = 1: chatbox: ♫ %song%
