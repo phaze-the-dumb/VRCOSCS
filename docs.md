@@ -94,7 +94,7 @@ If you try to just use an empty string in HONK as a value, it breaks the object 
 
 **Conditional Statements!**
 
-Oh boy, my favourite part of this. We can add conditional statements or if statements if you like to our code.
+Oh boy, my favourite part of this. We can add conditional statements or if statements like this.
 
 ```yml
 - OSC Actions:
