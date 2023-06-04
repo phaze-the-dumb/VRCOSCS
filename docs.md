@@ -106,7 +106,7 @@ Oh boy, my favourite part of this. We can add conditional statements or if state
 
 This checks if the players velocity in the X direction is greater than `1.5` if it is it outputs `/input/Jump` to osc causing the player to jump (dumb example but you get the point)
 
-`And` and `Or` can be done cruedly like this:
+`And` and `Or` can be done like this:
 
 **AND**
 ```yml
@@ -146,6 +146,7 @@ The following boolean operators can be used:
             - else:
                 - log: Im not going to jump
 ```
+
 You can put an `else` statement **inside** of the if statment to run when the condition is not met.
 
 Here's some more advanced code that "Does Something" when the user is moving faster than 1.5 and "Does Something Else" when the user is not moving fast enough.
