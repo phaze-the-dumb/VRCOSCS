@@ -87,6 +87,12 @@ The keyword `VALUE` represents the value the osc event contains.
 
 ### Slightly More Advanced Usage
 
+Empty Strings.
+
+If you try to just use an empty string in HONK as a value, it breaks the object structure, we have gotten around this by using `""` this will be replaced with an empty string in VRCOSCS code.
+
+===
+
 Conditional Statements!
 
 Oh boy, my favourite part of this. We can add conditional statements or if statements if you like to our code.
@@ -95,7 +101,8 @@ Oh boy, my favourite part of this. We can add conditional statements or if state
 - OSC Actions:
     - VelocityX:
         - OSC: /avatar/parameters/VelocityX
-        - VALUE > 1.5: OSCOut: /input/Jump
+        - VALUE > 1.5: 
+            - OSCOut: /input/Jump
 ```
 
 This checks if the players velocity in the X direction is greater than `1.5` if it is it outputs `/input/Jump` to osc causing the player to jump (dumb example but you get the point)
@@ -107,7 +114,8 @@ This checks if the players velocity in the X direction is greater than `1.5` if 
 - OSC Actions:
     - VelocityX:
         - OSC: /avatar/parameters/VelocityX
-        - VALUE < 1.5: VALUE > -1.5: OSCOut: /input/Jump
+        - VALUE < 1.5 AND VALUE > -1.5:
+            - OSCOut: /input/Jump
 ```
 
 **OR**
@@ -119,39 +127,63 @@ This checks if the players velocity in the X direction is greater than `1.5` if 
 - OSC Actions:
     - VelocityX:
         - OSC: /avatar/parameters/VelocityX
-        - hhhhh = 1: OSCOut: /input/Jump
-        - ggggg = 1: OSCOut: /input/Jump
+        - hhhhh = 1 OR ggggg = 1: 
+            - OSCOut: /input/Jump
 ```
 
 The following boolean operators can be used: 
-`=`, `>`, `<`, `>=`, `<=`
+`=`, `>`, `<`, `>=`, `<=`, `!=`
 
 **ELSE**
+```yml
+- Default Values:
+    - hhhhh: 0
 
-VRCOSCS Supports else statements, but they are a little bit more complicated. Due to VRCOSCS not running the lines of code in the order they are written, there can only be one if statement per action or event if else is used.
+- Events:
+    - Test:
+        - Hook: Start
+        - hhhhh = 1: 
+            - OSCOut: /input/Jump
+            - else:
+                - log: Im not going to jump
+```
+You can put an `else` statement **inside** of the if statment to run when the condition is not met.
 
-To enable the use of else statements put `- _EnableElse: 1` at the top of the action (or anywhere else! VRCOSCS does not care about the order you write stuff it)
-
-You can then use the `- else: ` keyword.
+Here's some more advanced code that "Does Something" when the user is moving faster than 1.5 and "Does Something Else" when the user is not moving fast enough.
 
 ```yml
 - Events:
     - Change clothes depending on velocity:
-        - _EnableElse: 1
         - Hook: OSCEventFired
-        - velX > -1.5: velX < 1.5: velY > -1.5: velY < 1.5: velZ > -1.5: velZ < 1.5: DO SOMETHING
-        - else: DO SOMETHING ELSE
+        - velX > -1.5 AND velX < 1.5 AND velY > -1.5 AND velY < 1.5 AND velZ > -1.5 AND velZ < 1.5: 
+            - log: DO SOMETHING
+            - else: 
+                - log: DO SOMETHING ELSE
 ```
-
-This code "does something" when the player is moving at a velocity higher than 1.5 and then "does something else" when the play isn't.
-
-Don't worry about the "event" bits i'll explain those in a minute.
 
 ### Events!
 
-There is the event key that allows code to be executed even when none of the osc actions are fired. There are currently three events:
+There is the event key that allows code to be executed even when none of the osc actions are fired. Here are the current hooks:
 - `OSCEventFired` - When an osc event is fired
-- `ChatboxUpdate` - Runs every 10 seconds, to be used when 
+- `ChatboxUpdate` - Runs every 10 seconds, to be used when for keeping a chatbox above the user
+- `SongUpdate` - Runs when the song is updated
+- `Start` - Runs when the program is started
+
+Events are used in the `Events` object, and you set the hook they use with the `Hook` key
+
+```yml
+- Default Values:
+    - x: 1
+
+- Events:
+    - Test:
+        - Hook: Start
+        - log: x
+        - x = 1:
+            - log: IT WORKS!!!!
+            - else: 
+                - log: OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+```
 
 ### Extra APIs
 

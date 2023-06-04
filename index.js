@@ -4,6 +4,7 @@ const MusicMetaServer = require('./metaserver');
 const HONK = require('honk');
 const fs = require('fs');
 const cp = require('child_process');
+const util = require('util');
 
 let prevSong = '';
 let osc = { clientStarted: false, serverStarted: false };
@@ -18,6 +19,8 @@ let config = new HONK(fs.readFileSync(__dirname + '/config.honk', 'utf-8'));
 config.parse();
 
 config = config.data;
+
+console.log(util.inspect(config, true, 1000000, true));
 
 let libs = fs.readdirSync(__dirname + '/libs');
 let pckg = JSON.parse(fs.readFileSync(__dirname + '/package.json', 'utf-8'));
@@ -40,6 +43,15 @@ for(let i = 0; i < libs.length; i++){
 }
 
 let main = () => {
+    let events = [];
+    let actions = [];
+
+    if(config['Events'])
+        events = Object.values(config['Events']);
+
+    if(config['OSC Actions'])
+        actions = Object.values(config['OSC Actions']);
+
     if(config['Default Values']){
         Object.keys(config['Default Values']).forEach(key => {
             if(key === 'parent')return;
@@ -71,205 +83,179 @@ let main = () => {
 
     oscServer.on('message', msg => {
         oscValues[msg[0]] = msg[1];
-        let events = config['Events'].filter(x => x.Hook === 'OSCEventFired');
-        
-        for(let i = 0; i < events.length; i++){
-            let event = events[i];
 
+        events.forEach(event => {
+            if(event.Hook !== 'OSCEventFired')return;
+    
             let eventDataCache = {};
             Object.keys(event).forEach(key => {
                 if(key === 'parent' || key === 'Hook')return;
                 let value = event[key];
-        
+    
                 processKey(key, value, msg, eventDataCache);
             })
-        }
+        })
 
-        let action = config['OSC Actions'].find(x => x.OSC === msg[0]);
-        if(!action)return;
+        actions.forEach(action => {
+            if(action.OSC !== msg[0])return;
+            // console.log(util.inspect(action, true, 1000000, true));
 
-        let actionDataCache = {};
-        Object.keys(action).forEach(key => {
-            if(key === 'parent' || key === 'OSC')return;
-            let value = action[key];
-
-            processKey(key, value, msg, actionDataCache);
+            let actionDataCache = {};
+            Object.keys(action).forEach(key => {
+                if(key === 'parent' || key === 'OSC')return;
+                let value = action[key];
+    
+                processKey(key, value, msg, actionDataCache);
+            })
         })
     })
 
     let processKey = ( key, value, msg, actionDataCache ) => {
-        if(key.includes('=') || key.includes('>') || key.includes('<') || key.includes('>=') || key.includes('<=')){
-            let dataSwitch = key;
-            let toExecute = value.split(': ');
+        if(typeof value === 'string' && values[value] !== undefined)value = values[value];
+        if(value === '""')value = '';
 
-            if(key.includes('=')){
-                let variableName = dataSwitch.split('=')[0].trim();
-                let variableValue = dataSwitch.split('=')[1].trim();
+        if(key.includes('=') || key.includes('>') || key.includes('<') || key.includes('>=') || key.includes('<=') || key.includes('!=')){
+            let dataSwitch = null;
+            let mode = null;
 
-                let val = values[variableName];
-                if(variableName === 'VALUE')val = msg[1];
-
-                if(val == variableValue){
-                    let execCommand = toExecute[0].trim();
-
-                    toExecute.shift();
-                    let execValue = toExecute.join(': ').trim();
-
-                    processKey(execCommand, execValue, msg, actionDataCache);
-                } else if(actionDataCache['elseEnabled']){
-                    if(actionDataCache['else']){
-                        toExecute = actionDataCache['else'].split(': ');
-                        let execCommand = toExecute.trim();
-
-                        toExecute.shift();
-                        let execValue = toExecute.join(': ').trim();
-
-                        processKey(execCommand, execValue, msg, actionDataCache);
-                        return;
-                    }
-
-                    actionDataCache['else'] = true;
-                }
-            } else if(key.includes('>')){
-                let variableName = dataSwitch.split('>')[0].trim();
-                let variableValue = dataSwitch.split('>')[1].trim();
-        
-                let val = values[variableName];
-                if(variableName === 'VALUE')val = msg[1];
-
-                if(val > variableValue){
-                    let execCommand = toExecute[0].trim();
-
-                    toExecute.shift();
-                    let execValue = toExecute.join(': ').trim();
-
-                    processKey(execCommand, execValue, msg, actionDataCache);
-                } else if(actionDataCache['elseEnabled']){
-                    if(actionDataCache['else']){
-                        toExecute = actionDataCache['else'].split(': ');
-                        let execCommand = actionDataCache['else'].trim();
-
-                        toExecute.shift();
-                        let execValue = toExecute.join(': ').trim();
-
-                        processKey(execCommand, execValue, msg, actionDataCache);
-                        return;
-                    }
-
-                    actionDataCache['else'] = true;
-                }
-            } else if(key.includes('<')){
-                let variableName = dataSwitch.split('<')[0].trim();
-                let variableValue = dataSwitch.split('<')[1].trim();
-        
-                let val = values[variableName];
-                if(variableName === 'VALUE')val = msg[1];
-
-                if(val < variableValue){
-                    let execCommand = toExecute[0].trim();
-
-                    toExecute.shift();
-                    let execValue = toExecute.join(': ').trim();
-
-                    processKey(execCommand, execValue, msg, actionDataCache);
-                } else if(actionDataCache['elseEnabled']){
-                    if(actionDataCache['else']){
-                        toExecute = actionDataCache['else'].split(': ');
-                        let execCommand = actionDataCache['else'].trim();
-
-                        toExecute.shift();
-                        let execValue = toExecute.join(': ').trim();
-
-                        processKey(execCommand, execValue, msg, actionDataCache);
-                        return;
-                    }
-
-                    actionDataCache['else'] = true;
-                }
-            } else if(key.includes('>=')){
-                let variableName = dataSwitch.split('>=')[0].trim();
-                let variableValue = dataSwitch.split('>=')[1].trim();
-        
-                let val = values[variableName];
-                if(variableName === 'VALUE')val = msg[1];
-
-                if(val >= variableValue){
-                    let execCommand = toExecute[0].trim();
-
-                    toExecute.shift();
-                    let execValue = toExecute.join(': ').trim();
-
-                    processKey(execCommand, execValue, msg, actionDataCache);
-                } else if(actionDataCache['elseEnabled']){
-                    if(actionDataCache['else']){
-                        toExecute = actionDataCache['else'].split(': ');
-                        let execCommand = actionDataCache['else'].trim();
-
-                        toExecute.shift();
-                        let execValue = toExecute.join(': ').t
-                        processKey(execCommand, execValue, msg, actionDataCache);
-                        return;
-                    }
-
-                    actionDataCache['else'] = true;
-                }
-            } else if(key.includes('<=')){
-                let variableName = dataSwitch.split('<=')[0].trim();
-                let variableValue = dataSwitch.split('<=')[1].trim();
-        
-                let val = values[variableName];
-                if(variableName === 'VALUE')val = msg[1];
-
-                if(val <= variableValue){
-                    let execCommand = toExecute[0].trim();
-
-                    toExecute.shift();
-                    let execValue = toExecute.join(': ').trim();
-
-                    processKey(execCommand, execValue, msg, actionDataCache);
-                } else if(actionDataCache['elseEnabled']){
-                    if(actionDataCache['else']){
-                        toExecute = actionDataCache['else'].split(': ');
-                        let execCommand = actionDataCache['else'].trim();
-
-                        toExecute.shift();
-                        let execValue = toExecute.join(': ').trim();
-
-                        processKey(execCommand, execValue, msg, actionDataCache);
-                        return;
-                    }
-
-                    actionDataCache['else'] = true;
-                }
-            }
-        } else if(key === 'else'){
-            if(actionDataCache['else']){
-                let toExecute = value.split(': ');
-                let execCommand = toExecute[0].trim();
-
-                toExecute.shift();
-                let execValue = toExecute.join(': ').trim();
-
-                processKey(execCommand, execValue, msg, actionDataCache);
-                return;
+            if(key.includes('AND')){
+                dataSwitch = key.split('AND');
+                mode = 'AND';
+            } else {
+                dataSwitch = key.split('OR');
+                mode = 'OR';
             }
 
-            actionDataCache['else'] = value;
-        } else if(key === '_EnableElse')
-            actionDataCache['elseEnabled'] = value === '1' ? true : false;
-        else if(libraryKeys[key]){
+            let results = [];
+
+            dataSwitch.forEach(dswitch => {
+                if(dswitch.includes('=')){
+                    let variableName = dswitch.split('=')[0].trim();
+                    let variableValue = dswitch.split('=')[1].trim();
+    
+                    let val = variableName;
+                    if(typeof variableName === 'string' && values[variableName] !== undefined)val = values[variableName];
+                    if(variableName === 'VALUE')val = msg[1];
+    
+                    let valVal = variableValue;
+                    if(typeof variableValue === 'string' && values[variableValue] !== undefined)valVal = values[variableValue];
+                    if(variableValue === 'VALUE')valVal = msg[1];
+                
+                    results.push(val == valVal);
+                } else if(dswitch.includes('!=')){
+                    let variableName = dswitch.split('!=')[0].trim();
+                    let variableValue = dswitch.split('!=')[1].trim();
+    
+                    let val = variableName;
+                    if(typeof variableName === 'string' && values[variableName] !== undefined)val = values[variableName];
+                    if(variableName === 'VALUE')val = msg[1];
+    
+                    let valVal = variableValue;
+                    if(typeof variableValue === 'string' && values[variableValue] !== undefined)valVal = values[variableValue];
+                    if(variableValue === 'VALUE')valVal = msg[1];
+                
+                    results.push(val != valVal);
+                } else if(dswitch.includes('>')){
+                    let variableName = dswitch.split('>')[0].trim();
+                    let variableValue = dswitch.split('>')[1].trim();
+    
+                    let val = variableName;
+                    if(typeof variableName === 'string' && values[variableName] !== undefined)val = values[variableName];
+                    if(variableName === 'VALUE')val = msg[1];
+    
+                    let valVal = variableValue;
+                    if(typeof variableValue === 'string' && values[variableValue] !== undefined)valVal = values[variableValue];
+                    if(variableValue === 'VALUE')valVal = msg[1];
+                
+                    results.push(val > valVal);
+                } else if(dswitch.includes('<')){
+                    let variableName = dswitch.split('<')[0].trim();
+                    let variableValue = dswitch.split('<')[1].trim();
+    
+                    let val = variableName;
+                    if(typeof variableName === 'string' && values[variableName] !== undefined)val = values[variableName];
+                    if(variableName === 'VALUE')val = msg[1];
+    
+                    let valVal = variableValue;
+                    if(typeof variableValue === 'string' && values[variableValue] !== undefined)valVal = values[variableValue];
+                    if(variableValue === 'VALUE')valVal = msg[1];
+                
+                    results.push(val < valVal);
+                } else if(dswitch.includes('>=')){
+                    let variableName = dswitch.split('>=')[0].trim();
+                    let variableValue = dswitch.split('>=')[1].trim();
+    
+                    let val = variableName;
+                    if(typeof variableName === 'string' && values[variableName] !== undefined)val = values[variableName];
+                    if(variableName === 'VALUE')val = msg[1];
+    
+                    let valVal = variableValue;
+                    if(typeof variableValue === 'string' && values[variableValue] !== undefined)valVal = values[variableValue];
+                    if(variableValue === 'VALUE')valVal = msg[1];
+                
+                    results.push(val >= valVal);
+                } else if(dswitch.includes('<=')){
+                    let variableName = dswitch.split('<=')[0].trim();
+                    let variableValue = dswitch.split('<=')[1].trim();
+    
+                    let val = variableName;
+                    if(typeof variableName === 'string' && values[variableName] !== undefined)val = values[variableName];
+                    if(variableName === 'VALUE')val = msg[1];
+    
+                    let valVal = variableValue;
+                    if(typeof variableValue === 'string' && values[variableValue] !== undefined)valVal = values[variableValue];
+                    if(variableValue === 'VALUE')valVal = msg[1];
+                
+                    results.push(val <= valVal);
+                }
+            })
+
+            let result = mode === 'AND' ? true : false;
+            
+            results.forEach(r => {
+                if(r && mode === 'OR')
+                    result = true;
+
+                if(!r && mode === 'AND')
+                    result = false;
+            })
+
+            if(result){
+                Object.keys(value).forEach(kkey => {
+                    if(key === 'parent' || key === 'else')return;
+                    let kvalue = value[kkey];
+
+                    processKey(kkey, kvalue, msg, actionDataCache);
+                })
+            } else if(value['else']){
+                let elseValue = value['else'];
+
+                Object.keys(elseValue).forEach(kkey => {
+                    if(key === 'parent')return;
+                    let kvalue = elseValue[kkey];
+
+                    processKey(kkey, kvalue, msg, actionDataCache);
+                })
+            }
+        } else if(libraryKeys[key]){
             libraryKeys[key]({ key, value, msg, actionDataCache, oscClient });
         } else if(key === 'chatbox'){
             let val = value === 'VALUE' ? msg[1] : value;
             val = val.split('%song%').join(prevSong);
 
             oscClient.send('/chatbox/input', [ val, true ]);
+        }  else if(key === 'log'){
+            let val = value === 'VALUE' ? msg[1] : value;
+            console.log(val);
         } else if(key === 'OSCOut'){
             let valueParts = value.split(' ');
             let uri = valueParts[0];
 
             valueParts.shift();
             if(valueParts[0] !== ''){
+                if(typeof valueParts[0] === 'string' && values[valueParts[0]] !== undefined)
+                    valueParts[0] = values[valueParts[0]];
+
                 valueParts[0] = convertString(valueParts[0]);
 
                 if(!oscValues[uri] || oscValues[uri] !== valueParts[0]){
@@ -313,37 +299,45 @@ let main = () => {
                 Title: prevSong
             }))
 
-            let events = config['Events'].filter(x => x.Hook === 'SongChange');
+            events.forEach(event => {
+                if(event.Hook !== 'SongChange')return;
         
-            for(let i = 0; i < events.length; i++){
-                let event = events[i];
-
                 let eventDataCache = {};
                 Object.keys(event).forEach(key => {
                     if(key === 'parent' || key === 'Hook')return;
                     let value = event[key];
-            
+        
                     processKey(key, value, [ null, null ], eventDataCache);
                 })
-            }
+            })
         }
     });
 
     setInterval(() => {
-        let events = config['Events'].filter(x => x.Hook === 'ChatboxUpdate');
-        
-        for(let i = 0; i < events.length; i++){
-            let event = events[i];
-
+        events.forEach(event => {
+            if(event.Hook !== 'ChatboxUpdate')return;
+    
             let eventDataCache = {};
             Object.keys(event).forEach(key => {
                 if(key === 'parent' || key === 'Hook')return;
                 let value = event[key];
-
+    
                 processKey(key, value, [ null, null ], eventDataCache);
             })
-        }
+        })
     }, 10000);
+
+    events.forEach(event => {
+        if(event.Hook !== 'Start')return;
+
+        let eventDataCache = {};
+        Object.keys(event).forEach(key => {
+            if(key === 'parent' || key === 'Hook')return;
+            let value = event[key];
+
+            processKey(key, value, [ null, null ], eventDataCache);
+        })
+    })
 }
 
 if(modulesToInstall.length === 0){
