@@ -149,7 +149,7 @@ The following boolean operators can be used:
 
 You can put an `else` statement **inside** of the if statment to run when the condition is not met.
 
-Here's some more advanced code that "Does Something" when the user is moving faster than 1.5 and "Does Something Else" when the user is not moving fast enough.
+Here's some more advanced code that "Does Something" when the user is moving slower than 1.5 and "Does Something Else" when the user is moving faster than 1.5.
 
 ```yml
 - Events:
