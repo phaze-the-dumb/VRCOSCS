@@ -87,13 +87,12 @@ The keyword `VALUE` represents the value the osc event contains.
 
 ### Slightly More Advanced Usage
 
-Empty Strings.
+**Empty Strings.**
 
 If you try to just use an empty string in HONK as a value, it breaks the object structure, we have gotten around this by using `""` this will be replaced with an empty string in VRCOSCS code.
 
-===
 
-Conditional Statements!
+**Conditional Statements!**
 
 Oh boy, my favourite part of this. We can add conditional statements or if statements if you like to our code.
 
