@@ -5,6 +5,7 @@ const HONK = require('honk');
 const fs = require('fs');
 const cp = require('child_process');
 const util = require('util');
+const path = require('path');
 
 let prevSong = '';
 let osc = { clientStarted: false, serverStarted: false };
@@ -12,10 +13,13 @@ let notifier = new n.XSNotifier();
 let values = {};
 let oscValues = {};
 
-if(!fs.existsSync(__dirname + '/config.honk'))
-    fs.writeFileSync(__dirname + '/config.honk', 'OSC Config\r\n- Client Port: 9000\r\n- Client IP: "127.0.0.1"\r\n- Server Port: 9001');
+if(!process.argv[2])process.argv[2] = 'config.honk';
+let file = path.join(__dirname, process.argv[2]);
 
-let config = new HONK(fs.readFileSync(__dirname + '/config.honk', 'utf-8'));
+if(!fs.existsSync(file))
+    fs.writeFileSync(file, 'OSC Config\r\n- Client Port: 9000\r\n- Client IP: "127.0.0.1"\r\n- Server Port: 9001');
+
+let config = new HONK(fs.readFileSync(file, 'utf-8'));
 config.parse();
 
 config = config.data;
@@ -60,57 +64,10 @@ let main = () => {
     }
 
     let oscServer = new nosc.Server(config['Server Port'], '0.0.0.0');
-    let oscClient = new nosc.Client(config['Client IP'].replaceAll('"', ''), config['Client Port']);
-
-    let libraryKeys = {};
-
-    libraries.forEach(lib => {
-        lib.init({ config, oscServer });
-
-        Object.keys(lib).forEach(key => {
-            if(key === 'init' || key === 'modules' || key === 'ignoreKeys' || lib.ignoreKeys.find(x => x === key))return;
-            libraryKeys[key] = lib[key];
-        });
-    });
-
-    console.log('OSC Client started.');
-    osc.clientStarted = true;
-
-    oscServer.on('listening', () => {
-        console.log('OSC Server is listening.');
-        osc.serverStarted = true;
-    })
-
-    oscServer.on('message', msg => {
-        oscValues[msg[0]] = msg[1];
-
-        events.forEach(event => {
-            if(event.Hook !== 'OSCEventFired')return;
-    
-            let eventDataCache = {};
-            Object.keys(event).forEach(key => {
-                if(key === 'parent' || key === 'Hook')return;
-                let value = event[key];
-    
-                processKey(key, value, msg, eventDataCache);
-            })
-        })
-
-        actions.forEach(action => {
-            if(action.OSC !== msg[0])return;
-            // console.log(util.inspect(action, true, 1000000, true));
-
-            let actionDataCache = {};
-            Object.keys(action).forEach(key => {
-                if(key === 'parent' || key === 'OSC')return;
-                let value = action[key];
-    
-                processKey(key, value, msg, actionDataCache);
-            })
-        })
-    })
+    let oscClient = new nosc.Client(config['Client IP'], config['Client Port']);
 
     let processKey = ( key, value, msg, actionDataCache ) => {
+        if(value === '%song%')value = prevSong;
         if(typeof value === 'string' && values[value] !== undefined)value = values[value];
         if(value === '""')value = '';
 
@@ -238,11 +195,12 @@ let main = () => {
                 })
             }
         } else if(libraryKeys[key]){
-            libraryKeys[key]({ key, value, msg, actionDataCache, oscClient });
+            libraryKeys[key]({ key, value, msg, actionDataCache, oscClient, values });
         } else if(key === 'chatbox'){
             let val = value === 'VALUE' ? msg[1] : value;
             val = val.split('%song%').join(prevSong);
 
+            console.log('Chatbox: ' + val);
             oscClient.send('/chatbox/input', [ val, true ]);
         }  else if(key === 'log'){
             let val = value === 'VALUE' ? msg[1] : value;
@@ -274,6 +232,54 @@ let main = () => {
         } else
             values[key] = value === 'VALUE' ? msg[1] : value;
     }
+
+    let libraryKeys = {};
+
+    libraries.forEach(lib => {
+        lib.init({ config, oscServer, events, processKey }); 
+
+        Object.keys(lib).forEach(key => {
+            if(key === 'init' || key === 'modules' || key === 'ignoreKeys' || lib.ignoreKeys.find(x => x === key))return;
+            libraryKeys[key] = lib[key];
+        });
+    });
+
+    console.log('OSC Client started.');
+    osc.clientStarted = true;
+
+    oscServer.on('listening', () => {
+        console.log('OSC Server is listening.');
+        osc.serverStarted = true;
+    })
+
+    oscServer.on('message', msg => {
+        oscValues[msg[0]] = msg[1];
+
+        events.forEach(event => {
+            if(event.Hook !== 'OSCEventFired')return;
+    
+            let eventDataCache = {};
+            Object.keys(event).forEach(key => {
+                if(key === 'parent' || key === 'Hook')return;
+                let value = event[key];
+    
+                processKey(key, value, msg, eventDataCache);
+            })
+        })
+
+        actions.forEach(action => {
+            if(action.OSC !== msg[0])return;
+            // console.log(util.inspect(action, true, 1000000, true));
+
+            let actionDataCache = {};
+            Object.keys(action).forEach(key => {
+                if(key === 'parent' || key === 'OSC')return;
+                let value = action[key];
+    
+                processKey(key, value, msg, actionDataCache);
+            })
+        })
+    })
 
     let convertString = ( str ) => {
         if(!isNaN(parseInt(str)))

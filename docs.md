@@ -220,3 +220,33 @@ The voicemeeter API supports these properties:
 - Mute: true / false
 - A1 - A5: true / false
 - B1 - B3: true / false
+
+### HTTP Server
+
+```yml
+- Events:
+    - Start A Test HTTP Server:
+        - Hook: Start
+
+        - HTTPOpen: testServer 80
+        - HTTPRoute: testServer
+
+        - HTTPRoutes:
+            - mainPage:
+                - Path: /
+                - Method: GET
+
+            - songPage:
+                - Path: /song
+                - Method: GET
+
+    - Respond to main page:
+        - Hook: mainPage
+        - HTTPResponse: hello world
+
+    - Respond to song page:
+        - Hook: songPage
+        - HTTPResponse: %song%
+```
+
+Documentation coming soon
