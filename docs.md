@@ -187,6 +187,13 @@ Events are used in the `Events` object, and you set the hook they use with the `
 
 ### Extra APIs
 
+You can include extra apis by using the following at the top of your code.
+
+```yml
+- Libraries:
+    - libName
+```
+
 You can interface with vrchats osc api through this by using the `OSCOut` keyword as I have shown above, but there are other keywords too.
 
 The keyword `robot` can be used to virtually press keys on your keyboard, this is useful for having a music controller or similar, as shown below.

@@ -31,10 +31,19 @@ let pckg = JSON.parse(fs.readFileSync(__dirname + '/package.json', 'utf-8'));
 let installedModules = Object.keys(pckg.dependencies);
 let modulesToInstall = [];
 let libraries = [];
+let libsToLoad = [];
+
+if(config['Libraries'])
+    libsToLoad = Object.values(config['Libraries']);
 
 let s = new MusicMetaServer();
 
 for(let i = 0; i < libs.length; i++){
+    if(!libsToLoad.find(x => x + '.js' === libs[i])){
+        console.log('Skipping library ' + libs[i].replace('.js', '') + ' because it is not included');
+        continue;
+    }
+
     let lib = require('./libs/'+libs[i]);
     libraries.push(lib);
 
