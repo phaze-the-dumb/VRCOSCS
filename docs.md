@@ -47,7 +47,7 @@ This is a key that has multiple other keys inside it. Again the value of these k
 
 ### Basic Usage
 
-**Note: VRCOSCS Does NOT run the code in the order it is written, due to how js treats objects.**
+**Note: VRCOSCS (sometimes) Does NOT run the code in the order it is written, due to how js treats objects.**
 
 (it runs it in alphabetical order)
 

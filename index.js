@@ -1,15 +1,11 @@
 const nosc = require('node-osc');
-const n = require('xsnotifier');
-const MusicMetaServer = require('./metaserver');
 const HONK = require('honk');
 const fs = require('fs');
 const cp = require('child_process');
 const util = require('util');
 const path = require('path');
 
-let prevSong = '';
 let osc = { clientStarted: false, serverStarted: false };
-let notifier = new n.XSNotifier();
 let values = {};
 let oscValues = {};
 
@@ -20,6 +16,7 @@ if(!fs.existsSync(file))
     fs.writeFileSync(file, 'OSC Config\r\n- Client Port: 9000\r\n- Client IP: "127.0.0.1"\r\n- Server Port: 9001');
 
 let config = new HONK(fs.readFileSync(file, 'utf-8'));
+config.debug = true;
 config.parse();
 
 config = config.data;
@@ -36,7 +33,6 @@ let libsToLoad = [];
 if(config['Libraries'])
     libsToLoad = Object.values(config['Libraries']);
 
-let s = new MusicMetaServer();
 
 for(let i = 0; i < libs.length; i++){
     if(!libsToLoad.find(x => x + '.js' === libs[i])){
@@ -68,7 +64,11 @@ let main = () => {
     if(config['Default Values']){
         Object.keys(config['Default Values']).forEach(key => {
             if(key === 'parent')return;
-            values[key] = config['Default Values'][key];
+
+            if(config['Default Values'][key] === '""')
+                values[key] = '';
+            else
+                values[key] = config['Default Values'][key];
         });
     }
 
@@ -76,8 +76,19 @@ let main = () => {
     let oscClient = new nosc.Client(config['Client IP'], config['Client Port']);
 
     let processKey = ( key, value, msg, actionDataCache ) => {
-        if(value === '%song%')value = prevSong;
-        if(typeof value === 'string' && values[value] !== undefined)value = values[value];
+        if(typeof value === 'string' && value.includes('[[') && value.includes(']]')){
+            value = value.split('[[').join(']]');
+            value = value.split(']]');
+
+            let key = value[1];
+            value.splice(1, 1);
+
+            if(key === 'VALUE')
+                value = value.join(msg[1]);
+            else if(values[key] !== undefined)
+                value = value.join(values[key]);
+        }
+
         if(value === '""')value = '';
 
         if(key.includes('=') || key.includes('>') || key.includes('<') || key.includes('>=') || key.includes('<=') || key.includes('!=')){
@@ -188,14 +199,14 @@ let main = () => {
 
             if(result){
                 Object.keys(value).forEach(kkey => {
-                    if(key === 'parent' || key === 'else')return;
+                    if(kkey === 'parent' || kkey === 'else')return;
                     let kvalue = value[kkey];
 
                     processKey(kkey, kvalue, msg, actionDataCache);
                 })
             } else if(value['else']){
                 let elseValue = value['else'];
-
+                
                 Object.keys(elseValue).forEach(kkey => {
                     if(key === 'parent')return;
                     let kvalue = elseValue[kkey];
@@ -207,7 +218,6 @@ let main = () => {
             libraryKeys[key]({ key, value, msg, actionDataCache, oscClient, values });
         } else if(key === 'chatbox'){
             let val = value === 'VALUE' ? msg[1] : value;
-            val = val.split('%song%').join(prevSong);
 
             console.log('Chatbox: ' + val);
             oscClient.send('/chatbox/input', [ val, true ]);
@@ -302,31 +312,6 @@ let main = () => {
         else
             return str;
     }
-
-    s.on('ActivityUpdated', a => {
-        if(prevSong !== a.media.artist + ' - ' + a.media.title){
-            prevSong = a.media.artist + ' - ' + a.media.title;
-            console.log('Song changed to: '+prevSong);
-
-            notifier.SendNotification(new n.XSNotification({
-                MessageType: 2,
-                SourceApp: 'VRCOSCS',
-                Title: prevSong
-            }))
-
-            events.forEach(event => {
-                if(event.Hook !== 'SongChange')return;
-        
-                let eventDataCache = {};
-                Object.keys(event).forEach(key => {
-                    if(key === 'parent' || key === 'Hook')return;
-                    let value = event[key];
-        
-                    processKey(key, value, [ null, null ], eventDataCache);
-                })
-            })
-        }
-    });
 
     setInterval(() => {
         events.forEach(event => {

@@ -27,6 +27,14 @@ Here are several useful ones:
 - [Spotify](https://github.com/phaze-the-dumb/fknmusicproto/blob/master/spotify-client.user.js?raw=true)
 - [Jellyfin](https://github.com/phaze-the-dumb/fknmusicproto/blob/master/jellyfin-client.user.js?raw=true) - Note: You need to edit the address of this one to your jellyfin server ip
 
+You can use this code to recive the song name:
+```yml
+- Events:
+    - Update chatbox when song changes:
+        - Hook: SongChange
+        - log: Song changed to: [[VALUE]]
+```
+
 ### Credits.
 
 - [HONK](https://github.com/phaze-the-dumb/honk.js): The main interpreter.
