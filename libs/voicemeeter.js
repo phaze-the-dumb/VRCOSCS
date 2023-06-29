@@ -4,19 +4,26 @@ let voiceMeeterProperties = [
     'A4', 'A5', 'B1', 'B2', 'B3'
 ]
 
+let debug = false;
+
 let output = {
     modules: [ 'voicemeeter-connector' ],
     ignoreKeys: [ 'updateVM' ],
-    init: ({}) => {
+    init: ({ debug: d }) => {
         const { Voicemeeter } = require('voicemeeter-connector');
+
+        debug = d;
 
         Voicemeeter.init().then(async vm => {
             await vm.connect();
-            console.log('Voicemeeter connected');
+
+            if(debug)
+                console.log('Voicemeeter connected');
 
             voicem = vm;
         }).catch(err => {
-            console.log('Failed to connect to Voicemeeter');
+            if(debug)
+                console.log('Failed to connect to Voicemeeter');
         });
     },
     VoiceMeeterStrip: ({ value, msg, actionDataCache }) => {
@@ -52,7 +59,8 @@ let output = {
             if(!voiceMeeterProperties.find(x => x === actionDataCache.VoiceMeeterProperty))
                 throw new Error('Invaild VoiceMeeterStrip property: '+actionDataCache.VoiceMeeterProperty);
     
-            console.log('Set VoiceMeeter: '+actionDataCache.VoiceMeeterStrip+' '+actionDataCache.VoiceMeeterProperty+' to '+actionDataCache.VoiceMeeterValue);
+            if(debug)
+                console.log('Set VoiceMeeter: '+actionDataCache.VoiceMeeterStrip+' '+actionDataCache.VoiceMeeterProperty+' to '+actionDataCache.VoiceMeeterValue);
     
             if(actionDataCache.VoiceMeeterProperty === 'Gain')
                 return voicem.setStripParameter(actionDataCache.VoiceMeeterStrip, StripProperties.Gain, actionDataCache.VoiceMeeterValue * 72 - 60);

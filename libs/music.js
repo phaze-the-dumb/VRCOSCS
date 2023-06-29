@@ -2,7 +2,7 @@ module.exports = {
   modules: [ 'xsnotifier', 'ws' ],
   ignoreKeys: [],
   init: ({
-    events, processKey
+    events, processKey, debug
   }) => {
     const ws = require('ws');
     const crypto = require('crypto');
@@ -260,6 +260,9 @@ module.exports = {
     s.on('ActivityUpdated', a => {
       if (prevSong !== a.media.artist + ' - ' + a.media.title) {
         prevSong = a.media.artist + ' - ' + a.media.title;
+
+        if(debug)
+          console.log('Song changed to ' + prevSong);
 
         notifier.SendNotification(new n.XSNotification({
           MessageType: 2,

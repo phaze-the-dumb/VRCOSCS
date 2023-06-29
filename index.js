@@ -16,7 +16,7 @@ if(!fs.existsSync(file))
     fs.writeFileSync(file, 'OSC Config\r\n- Client Port: 9000\r\n- Client IP: "127.0.0.1"\r\n- Server Port: 9001');
 
 let config = new HONK(fs.readFileSync(file, 'utf-8'));
-config.debug = true;
+// config.debug = true;
 config.parse();
 
 config = config.data;
@@ -219,8 +219,10 @@ let main = () => {
         } else if(key === 'chatbox'){
             let val = value === 'VALUE' ? msg[1] : value;
 
-            console.log('Chatbox: ' + val);
-            oscClient.send('/chatbox/input', [ val, true ]);
+            if(config['Debug'])
+                console.log('Chatbox: ' + val);
+
+            oscClient.send('/chatbox/input', [ val, true, false ]);
         }  else if(key === 'log'){
             let val = value === 'VALUE' ? msg[1] : value;
             console.log(val);
@@ -248,14 +250,15 @@ let main = () => {
                     setTimeout(() => oscValues[uri] = false, 200);
                 }
             }
-        } else
+        } else{
             values[key] = value === 'VALUE' ? msg[1] : value;
+        }
     }
 
     let libraryKeys = {};
 
     libraries.forEach(lib => {
-        lib.init({ config, oscServer, events, processKey }); 
+        lib.init({ config, oscServer, events, processKey, debug: config['Debug'] }); 
 
         Object.keys(lib).forEach(key => {
             if(key === 'init' || key === 'modules' || key === 'ignoreKeys' || lib.ignoreKeys.find(x => x === key))return;
@@ -263,11 +266,11 @@ let main = () => {
         });
     });
 
-    console.log('OSC Client started.');
+    console.log('OSC Client started. On port: ' + config['Client Port']);
     osc.clientStarted = true;
 
     oscServer.on('listening', () => {
-        console.log('OSC Server is listening.');
+        console.log('OSC Server is listening. On port ' + config['Server Port']);
         osc.serverStarted = true;
     })
 
