@@ -3,6 +3,7 @@
     "honk": "github:phaze-the-dumb/honk.js",
     "node-osc": "^8.0.10",
     "robotjs": "^0.6.0",
+    "serialport": "^11.0.0",
     "voicemeeter-connector": "^1.2.0",
     "ws": "^8.13.0",
     "xsnotifier": "^0.5.3"
