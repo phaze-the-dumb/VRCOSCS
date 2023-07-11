@@ -2,19 +2,29 @@ let port = null;
 let timeout = null;
 let hapticsMultiplier = 1;
 
-module.exports = {
+let h = {
   modules: [ 'serialport' ],
-  ignoreKeys: [],
+  ignoreKeys: [ 'tryConnect' ],
   init: () => {},
-  OpenHaptics: ({ value }) => {
+  tryConnect: ( p ) => {
     const { SerialPort } = require('serialport');
 
-    port = new SerialPort({ path: value, baudRate: 9600 });
+    port = new SerialPort({ path: p, baudRate: 9600 });
     port.write('\r.echo off\r');
+
+    port.on('error', ( err ) => {
+      console.error('Error connecting to SerialPort: ', err);
+      setTimeout(() => {
+        h.tryConnect(p);
+      }, 5000);
+    })
+  },
+  OpenHaptics: ({ value }) => {
+    h.tryConnect(value);
   },
   LeftHaptics: ({ value }) => {
     if(!port)
-      throw new Error('Need to open serial port before you can send data');
+      return console.error('Cannot send data port not connected');
 
     port.write(Buffer.from('l.setDuty('+(value * hapticsMultiplier).toString()+')\r'));
     clearTimeout(timeout);
@@ -25,7 +35,7 @@ module.exports = {
   },
   RightHaptics: ({ value }) => {
     if(!port)
-      throw new Error('Need to open serial port before you can send data');
+      return console.error('Cannot send data port not connected');
 
     port.write(Buffer.from('r.setDuty('+(value * hapticsMultiplier).toString()+')\r'));
     clearTimeout(timeout);
@@ -38,3 +48,5 @@ module.exports = {
     hapticsMultiplier = value;
   }
 }
+
+module.exports = h;
