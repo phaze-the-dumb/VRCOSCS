@@ -42,3 +42,5 @@ You can use this code to recive the song name:
 - [XSNotifier](https://github.com/phaze-the-dumb/XSNotifier): Used to show current song in XS Overlay.
 - [Voicemeeter Connector](https://github.com/ChewbaccaCookie/voicemeeter-connector): Used by the voicemeeter library to control voicemeeter.
 - [RobotJS](https://robotjs.io/): Used by the robot library to virtually press keys.
+- [SerialPort](https://serialport.io/): Used my the head haptics library to send and receive serial data.
+- [WS](https://github.com/websockets/ws): Used my the music library to send and recive data over websockets.
