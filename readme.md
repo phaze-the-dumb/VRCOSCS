@@ -2,6 +2,8 @@
 
 ***what the fuck have i created?***
 
+**Note: Voicemod intergration is coming soon, stop nagging me!**
+
 ### What is it?
 
 VRCOSC Scripting is a simple scripting "language" to make is easy and simple to control osc inputs and outputs. These can also link into other applications such as [VoiceMeeter](https://vb-audio.com/Voicemeeter/index.htm).
