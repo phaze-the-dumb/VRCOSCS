@@ -158,16 +158,7 @@ module.exports = {
                     reason: 'DuplicateID'
                   }));
 
-                  this.activity.forEach(a => socket.send(JSON.stringify({
-                    type: 'ClientUpdate',
-                    songTitle: a.media.songTitle,
-                    songArtist: a.media.songArtist,
-                    songAlbum: a.media.songAlbum,
-                    duration: a.media.duration,
-                    elapsed: a.media.elapsed,
-                    playing: a.media.playing,
-                    source: a.media.source
-                  })));
+                  this.activity.forEach(a => socket.send(JSON.stringify(a)));
 
                   return;
                 }
@@ -198,13 +189,7 @@ module.exports = {
                   this.activity.push(activity);
                 }
 
-                activity.media.title = msg.songTitle;
-                activity.media.artist = msg.songArtist;
-                activity.media.album = msg.songAlbum;
-                activity.media.duration = msg.duration;
-                activity.media.elapsed = msg.elapsed;
-                activity.media.playing = msg.playing;
-                activity.media.source = msg.source;
+                activity.media = msg
                 this.emit('ActivityUpdated', activity);
 
                 this.secondarys.forEach(s =>
@@ -258,8 +243,8 @@ module.exports = {
     let prevSong = '';
 
     s.on('ActivityUpdated', a => {
-      if (prevSong !== a.media.artist + ' - ' + a.media.title) {
-        prevSong = a.media.artist + ' - ' + a.media.title;
+      if (prevSong !== a.media.songArtist + ' - ' + a.media.songTitle) {
+        prevSong = a.media.songArtist + ' - ' + a.media.songTitle;
 
         if(debug)
           console.log('Song changed to ' + prevSong);
