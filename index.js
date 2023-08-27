@@ -204,11 +204,11 @@ let main = () => {
 
                     processKey(kkey, kvalue, msg, actionDataCache);
                 })
-            } else if(value['else']){
-                let elseValue = value['else'];
+            } else if(value['Else']){
+                let elseValue = value['Else'];
                 
                 Object.keys(elseValue).forEach(kkey => {
-                    if(key === 'parent')return;
+                    if(kkey === 'parent')return;
                     let kvalue = elseValue[kkey];
 
                     processKey(kkey, kvalue, msg, actionDataCache);
@@ -216,14 +216,14 @@ let main = () => {
             }
         } else if(libraryKeys[key]){
             libraryKeys[key]({ key, value, msg, actionDataCache, oscClient, values });
-        } else if(key === 'chatbox'){
+        } else if(key === 'Chatbox'){
             let val = value === 'VALUE' ? msg[1] : value;
 
             if(config['Debug'])
                 console.log('Chatbox: ' + val);
 
             oscClient.send('/chatbox/input', [ val, true, false ]);
-        }  else if(key === 'log'){
+        }  else if(key === 'Log'){
             let val = value === 'VALUE' ? msg[1] : value;
             console.log(val);
         } else if(key === 'OSCOut'){
@@ -258,7 +258,7 @@ let main = () => {
     let libraryKeys = {};
 
     libraries.forEach(lib => {
-        lib.init({ config, oscServer, events, processKey, debug: config['Debug'] }); 
+        lib.init({ config, oscServer, events, processKey, debug: config['Debug'] });
 
         Object.keys(lib).forEach(key => {
             if(key === 'init' || key === 'modules' || key === 'ignoreKeys' || lib.ignoreKeys.find(x => x === key))return;
@@ -276,6 +276,7 @@ let main = () => {
 
     oscServer.on('message', msg => {
         oscValues[msg[0]] = msg[1];
+        // console.log(msg);
 
         events.forEach(event => {
             if(event.Hook !== 'OSCEventFired')return;
